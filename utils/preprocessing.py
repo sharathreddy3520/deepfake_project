@@ -1,3 +1,4 @@
+
 """
 utils/preprocessing.py
 Shared preprocessing utilities for image, video, and audio inputs.
@@ -76,36 +77,10 @@ def denormalize(tensor: torch.Tensor) -> np.ndarray:
 
 
 # ──────────────────────────────────────────────────────────────────────────────
-# Face detection (Streamlit + VS Code compatible)
+# Face detection (DISABLED for Streamlit Cloud)
 # ──────────────────────────────────────────────────────────────────────────────
 
-def _load_face_detector():
-    """
-    Load Haar Cascade safely.
-    Returns an empty classifier instead of crashing.
-    """
-    try:
-        haar_path = cv2.data.haarcascades + "haarcascade_frontalface_default.xml"
-
-        if not os.path.exists(haar_path):
-            haar_path = os.path.join(
-                os.path.dirname(cv2.__file__),
-                "data",
-                "haarcascade_frontalface_default.xml"
-            )
-
-        detector = cv2.CascadeClassifier(haar_path)
-
-        if detector.empty():
-            return cv2.CascadeClassifier()
-
-        return detector
-
-    except Exception:
-        return cv2.CascadeClassifier()
-
-
-_face_detector = _load_face_detector()
+_face_detector = None
 
 
 def detect_and_crop_face(
@@ -113,41 +88,10 @@ def detect_and_crop_face(
     margin: float = 0.3
 ) -> Optional[Image.Image]:
     """
-    Detect largest face.
-    Returns original image if detector is unavailable.
+    Face detection disabled.
+    Returns the original image without cropping.
     """
-
-    if _face_detector.empty():
-        return img
-
-    bgr = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
-    gray = cv2.cvtColor(bgr, cv2.COLOR_BGR2GRAY)
-
-    faces = _face_detector.detectMultiScale(
-        gray,
-        scaleFactor=1.1,
-        minNeighbors=5,
-        minSize=(60, 60)
-    )
-
-    if len(faces) == 0:
-        return img
-
-    x, y, w, h = max(faces, key=lambda f: f[2] * f[3])
-
-    mw = int(w * margin)
-    mh = int(h * margin)
-
-    H, W = bgr.shape[:2]
-
-    x1 = max(0, x - mw)
-    y1 = max(0, y - mh)
-    x2 = min(W, x + w + mw)
-    y2 = min(H, y + h + mh)
-
-    cropped = np.array(img)[y1:y2, x1:x2]
-
-    return Image.fromarray(cropped)
+    return img
 
 
 # ──────────────────────────────────────────────────────────────────────────────
