@@ -70,9 +70,24 @@ def denormalize(tensor: torch.Tensor) -> np.ndarray:
     return img
 
 
-# ── Face detection (lightweight Haar Cascade) ────────────────────────────────
-_HAAR_PATH = cv2.data.haarcascades + "haarcascade_frontalface_default.xml"
-_face_detector = cv2.CascadeClassifier(_HAAR_PATH)
+# ── Face detection (works locally + Streamlit Cloud) ─────────────
+try:
+    HAAR_PATH = os.path.join(
+        cv2.data.haarcascades,
+        "haarcascade_frontalface_default.xml"
+    )
+except AttributeError:
+    # Fallback for some cloud environments
+    HAAR_PATH = os.path.join(
+        os.path.dirname(cv2.__file__),
+        "data",
+        "haarcascade_frontalface_default.xml"
+    )
+
+_face_detector = cv2.CascadeClassifier(HAAR_PATH)
+
+if _face_detector.empty():
+    raise RuntimeError(f"Could not load Haar Cascade: {HAAR_PATH}")
 
 
 def detect_and_crop_face(img: Image.Image,
